@@ -16,39 +16,43 @@ app.use(express.static('public'));
 app.set('path', __dirname + '/public');
 
 
-const connectDB= require('./config/db');
+const connectDB = require('./config/db');
 
 connectDB();
 
 app.get('/', (req, res) => {
- res.sendFile(__dirname + '/public/index.html');
-}   );
+    res.sendFile(__dirname + '/public/index.html');
+});
 
-app.post('/research',urlvalidator, async (req, res) => {
+app.post('/research', urlvalidator, async (req, res) => {
 
     try {
 
-const url = req.body.urlinput;
-console.log(url);
-const rawdata = await scrapeWebsite(url);
+        const url = req.body.urlinput;
 
-const cleanedText = cleanText(rawdata.bodyText);
-const summary = generateSummary(cleanedText);
-const readingTime = calculateReadingTime(cleanedText);
+        console.log(url);
+        const rawdata = await scrapeWebsite(url);
 
+        const cleanedText = cleanText(rawdata.bodyText);
 
-
-
-
-res.json({'url': url,'title': rawdata.title, 'description': rawdata.description, 'favicon': rawdata.favicon, 'summary': summary, 'reading_time': readingTime });
+        console.log("Cleaned Text:", cleanedText);
+        const summary = generateSummary(cleanedText);
+        const readingTime = calculateReadingTime(cleanedText);
 
 
-}catch (error) {
-        console.error('Error saving research:',error);
+
+
+
+        res.json({ 'url': url, 'title': rawdata.title, 'description': rawdata.description, 'favicon': rawdata.favicon, 'summary': summary, 'reading_time': readingTime });
+
+
+    } catch (error) {
+        console.error('Error saving research:', error);
         res.status(500).json({ error: 'Failed to save research' });
     }
 }
 )
 
-app.listen(port, () => {  console.log(`Server is running on port ${port}`);
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });

@@ -1,10 +1,10 @@
-function readingTime(text){
+function readingTime(text) {
 
- const words = text.split(" ").length;
+  const words = text.split(" ").length;
 
- const minutes = Math.ceil(words / 200);
+  const minutes = Math.ceil(words / 200);
 
- return minutes + " minutes";
+  return minutes + " minutes";
 
 }
 

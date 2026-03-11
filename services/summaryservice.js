@@ -1,10 +1,10 @@
-function generateSummary(text){
+function generateSummary(text) {
 
- const sentences = text.split(".");
+  const sentences = text.split(".");
 
- const summary = sentences.slice(0,10).join(".");
+  const summary = sentences.slice(0, 10).join(".");
 
- return summary;
+  return summary;
 
 }
 
