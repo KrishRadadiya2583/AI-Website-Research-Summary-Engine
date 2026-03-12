@@ -15,7 +15,9 @@ const research = async (req, res) => {
     try {
 
         const url = req.body.urlinput;
-    console.log(url);
+        
+        console.log(url);
+
         const existingResearch = await researchModel.findOne({ url: url });
 
         if (existingResearch) {

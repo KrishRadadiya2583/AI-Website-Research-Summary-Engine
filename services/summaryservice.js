@@ -1,7 +1,7 @@
 function generateSummary(text, maxSentences = 4) {
   if (!text || typeof text !== "string") return "";
 
-  // Split sentences
+  
   const sentences = text
     .replace(/\n+/g, " ")
     .split(/[.!?]+/)
@@ -10,7 +10,7 @@ function generateSummary(text, maxSentences = 4) {
 
   if (sentences.length <= maxSentences) return sentences.join(". ") + ".";
 
-  // Build word frequency map
+  
   const words = text
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, "")
@@ -28,7 +28,6 @@ function generateSummary(text, maxSentences = 4) {
     }
   }
 
-  // Score sentences
   const scored = sentences.map(sentence => {
     const sentenceWords = sentence
       .toLowerCase()
@@ -43,10 +42,9 @@ function generateSummary(text, maxSentences = 4) {
     return { sentence, score };
   });
 
-  // Sort by importance
   scored.sort((a, b) => b.score - a.score);
 
-  // Take top sentences
+  
   const summary = scored
     .slice(0, maxSentences)
     .map(s => s.sentence)

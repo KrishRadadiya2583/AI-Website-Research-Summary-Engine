@@ -11,7 +11,6 @@ const urlValidator = (req, res, next) => {
   try {
     const parsedUrl = new URL(url);
 
-    // Allow only http or https
     if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
       return res.status(400).json({
         success: false,
@@ -19,7 +18,8 @@ const urlValidator = (req, res, next) => {
       });
     }
 
-    next(); // URL is valid
+    next(); 
+    
   } catch (error) {
     return res.status(400).json({
       success: false,
