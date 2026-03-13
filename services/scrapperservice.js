@@ -3,6 +3,7 @@ const puppeteer = require("puppeteer");
 async function scrapeWebsite(url) {
   let browser;
   try {
+    
     browser = await puppeteer.launch();
     const page = await browser.newPage();
 

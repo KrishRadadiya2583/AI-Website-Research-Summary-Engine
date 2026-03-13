@@ -15,40 +15,40 @@ const research = async (req, res) => {
     try {
 
         const url = req.body.urlinput;
-        
+
         console.log(url);
 
         const existingResearch = await researchModel.findOne({ url: url });
 
         if (existingResearch) {
-            return  res.json({ 'url': existingResearch.url, 'title': existingResearch.title, 'description': existingResearch.description, 'favicon': existingResearch.favicon, 'summary': existingResearch.summary, 'reading_time': existingResearch.readingTime });
+            return res.send({ 'url': existingResearch.url, 'title': existingResearch.title, 'description': existingResearch.description, 'favicon': existingResearch.favicon, 'summary': existingResearch.summary, 'readingTime': existingResearch.readingTime });
         }
-else{
+        else {
 
 
-        
-        const rawdata = await scrapeWebsite(url);
 
-        const cleanedText = cleanText(rawdata.bodyText);
+            const rawdata = await scrapeWebsite(url);
 
-        const summary = generateSummary(cleanedText);
-        const readingTime = calculateReadingTime(cleanedText);
+            const cleanedText = cleanText(rawdata.bodyText);
 
-        const newResearch = new researchModel({
-            url: url,
-            title: rawdata.title,
-            description: rawdata.description,
-            favicon: rawdata.favicon,
-            summary: summary,
-            reading_time: readingTime
-        });
+            const summary = generateSummary(cleanedText);
+            const readingTime = calculateReadingTime(cleanedText);
 
-        await newResearch.save();
-        console.log('Research saved successfully');
+            const newResearch = new researchModel({
+                url: url,
+                title: rawdata.title,
+                description: rawdata.description,
+                favicon: rawdata.favicon,
+                summary: summary,
+                readingTime: readingTime
+            });
 
-        res.json({ 'url': url, 'title': rawdata.title, 'description': rawdata.description, 'favicon': rawdata.favicon, 'summary': summary, 'reading_time': readingTime });
+            await newResearch.save();
+            console.log('Research saved successfully');
 
-}
+            res.send({ 'url': url, 'title': rawdata.title, 'description': rawdata.description, 'favicon': rawdata.favicon, 'summary': summary, 'readingTime': readingTime });
+
+        }
     } catch (error) {
         console.error('Error saving research:', error);
         res.status(500).json({ error: 'Failed to save research' });

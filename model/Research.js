@@ -11,17 +11,17 @@ const researchSchema = new mongoose.Schema({
   title: {
     type: String
   },
-description: {
-  type: String
-},
-fevicon: {
-  type: String
-},
+  description: {
+    type: String
+  },
+  fevicon: {
+    type: String
+  },
   summary: {
     type: String
   },
 
-  reading_time: {
+  readingTime: {
     type: String
   },
 

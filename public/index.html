@@ -1,18 +1,271 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1>Welcome to My App</h1>
-    <p> Enter A Valid Url</p>
-    <form action="/research" method="post">
-    <input type="url" placeholder="Enter URL here" id="urlInput" name="urlinput">
 
-    <input type="submit" value="Submit" name="submit">
-    </form>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Website Research Tool</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial, sans-serif;
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+}
+
+.container{
+    width:100%;
+    max-width:750px;
+    background:white;
+    padding:30px;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.2);
+}
+
+h1{
+    text-align:center;
+    margin-bottom:10px;
+}
+
+form{
+    display:flex;
+    gap:10px;
+    margin-top:20px;
+}
+
+input[type=url]{
+    flex:1;
+    padding:12px;
+    border-radius:6px;
+    border:1px solid #ccc;
+    font-size:14px;
+}
+
+button{
+    padding:12px 20px;
+    border:none;
+    background:#4CAF50;
+    color:white;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+button:disabled{
+    background:#aaa;
+}
+
+.loading{
+    margin-top:20px;
+    text-align:center;
+    font-weight:bold;
+}
+
+.result{
+    margin-top:25px;
+    padding:20px;
+    border-radius:10px;
+    border:1px solid #ddd;
+    background:#fafafa;
+    position:relative;
+}
+
+.close-btn{
+    position:absolute;
+    right:10px;
+    top:10px;
+    border:none;
+    background:#ff4d4d;
+    color:white;
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.result h2{
+    margin-top:10px;
+}
+
+.meta{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+
+.summary{
+    margin-top:10px;
+    line-height:1.6;
+}
+
+.visit{
+    display:inline-block;
+    margin-top:12px;
+    padding:8px 14px;
+    background:#007bff;
+    color:white;
+    text-decoration:none;
+    border-radius:5px;
+}
+
+.error{
+    color:red;
+    margin-top:20px;
+}
+
+/* ---------------- Responsive ---------------- */
+
+@media(max-width:600px){
+
+.container{
+padding:20px;
+}
+
+form{
+flex-direction:column;
+}
+
+button{
+width:100%;
+}
+
+.meta{
+flex-direction:column;
+align-items:flex-start;
+}
+
+.result{
+padding:18px;
+}
+
+h1{
+font-size:22px;
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🔎 Website Research Tool</h1>
+
+<form id="researchForm">
+
+<input type="url" placeholder="Enter website URL..." id="urlInput" required>
+
+<button id="analyzeBtn" type="submit">Analyze</button>
+
+</form>
+
+<div id="loading" class="loading" style="display:none;">
+⏳ Scraping website & generating summary...
+</div>
+
+<div id="error" class="error"></div>
+
+<div id="result"></div>
+
+</div>
+
+<script>
+
+const form = document.getElementById("researchForm");
+const resultDiv = document.getElementById("result");
+const loading = document.getElementById("loading");
+const errorDiv = document.getElementById("error");
+const btn = document.getElementById("analyzeBtn");
+
+form.addEventListener("submit", async function(e){
+
+e.preventDefault();
+
+const url = document.getElementById("urlInput").value;
+
+resultDiv.innerHTML="";
+errorDiv.innerHTML="";
+
+loading.style.display="block";
+btn.disabled=true;
+
+try{
+
+const response = await fetch("/research",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({urlinput:url})
+});
+
+if(!response.ok){
+throw new Error("Server error");
+}
+
+const data = await response.json();
+
+loading.style.display="none";
+btn.disabled=false;
+
+resultDiv.innerHTML = `
+<div class="result" id="resultCard">
+
+<button class="close-btn" onclick="closeResult()">✕</button>
+
+<div class="meta">
+<img src="${data.favicon}" width="32">
+<strong>${data.url}</strong>
+</div>
+
+<h2>${data.title}</h2>
+
+<p><strong>Description:</strong> ${data.description}</p>
+
+<div class="summary">
+<strong>Summary:</strong>
+<p>${data.summary}</p>
+</div>
+
+<p><strong>Reading Time:</strong> ${data.readingTime} min</p>
+
+<a class="visit" href="${data.url}" target="_blank">Visit Website</a>
+
+</div>
+`;
+
+}
+catch(err){
+
+loading.style.display="none";
+btn.disabled=false;
+
+errorDiv.innerHTML="⚠ Failed to analyze website.";
+
+}
+
+});
+
+function closeResult(){
+document.getElementById("result").innerHTML="";
+}
+
+</script>
 
 </body>
 </html>
