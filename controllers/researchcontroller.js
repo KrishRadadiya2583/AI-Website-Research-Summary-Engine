@@ -31,7 +31,7 @@ const research = async (req, res) => {
 
             const cleanedText = cleanText(rawdata.bodyText);
 
-            const summary = generateSummary(cleanedText);
+            const summary = await generateSummary(cleanedText);
             const readingTime = calculateReadingTime(cleanedText);
 
             const newResearch = new researchModel({
