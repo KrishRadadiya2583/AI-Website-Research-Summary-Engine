@@ -21,12 +21,17 @@ async function scrapeWebsite(url) {
       };
 
       const descriptionMeta = getMeta("description");
+      const headers = Array.from(document.querySelectorAll('h1, h2, h3'))
+        .map(h => h.innerText.trim())
+        .filter(t => t.length > 5)
+        .slice(0, 10);
 
       return {
         title: document.title || "",
         description: descriptionMeta ? descriptionMeta.replace(/\n/g, " ").trim() : "",
         favicon: getLink("icon") || getLink("shortcut icon") || "",
-        bodyText: document.body.innerHTML
+        bodyText: document.body.innerHTML,
+        headers: headers
       };
     });
 

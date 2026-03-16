@@ -14,13 +14,18 @@ const researchSchema = new mongoose.Schema({
   description: {
     type: String
   },
-  fevicon: {
+  favicon: {
     type: String
   },
   summary: {
     type: String
   },
-
+  keypoints: {
+    type: [String]
+  },
+  keywords: {
+    type: [String]
+  },
   readingTime: {
     type: String
   },
@@ -28,4 +33,4 @@ const researchSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-module.exports = mongoose.model("Research", researchSchema);
+module.exports = mongoose.model("Research", researchSchema);

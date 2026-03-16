@@ -1,8 +1,8 @@
-
 const scrapeWebsite = require('../services/scrapperservice');
 const cleanText = require('../utils/textcleaner');
 const generateSummary = require('../services/summaryservice');
 const calculateReadingTime = require('../utils/readingtime');
+const extractKeywords = require('../utils/keywordextractor');
 
 const researchModel = require('../model/Research');
 
@@ -21,11 +21,18 @@ const research = async (req, res) => {
         const existingResearch = await researchModel.findOne({ url: url });
 
         if (existingResearch) {
-            return res.send({ 'url': existingResearch.url, 'title': existingResearch.title, 'description': existingResearch.description, 'favicon': existingResearch.favicon, 'summary': existingResearch.summary, 'readingTime': existingResearch.readingTime });
+            return res.send({
+                'url': existingResearch.url,
+                'title': existingResearch.title,
+                'description': existingResearch.description,
+                'favicon': existingResearch.favicon,
+                'summary': existingResearch.summary,
+                'keypoints': existingResearch.keypoints || [],
+                'keywords': existingResearch.keywords || [],
+                'readingTime': existingResearch.readingTime
+            });
         }
         else {
-
-
 
             const rawdata = await scrapeWebsite(url);
 
@@ -33,6 +40,8 @@ const research = async (req, res) => {
 
             const summary = await generateSummary(cleanedText);
             const readingTime = calculateReadingTime(cleanedText);
+            const keywords = extractKeywords(cleanedText);
+            const keypoints = rawdata.headers || [];
 
             const newResearch = new researchModel({
                 url: url,
@@ -40,13 +49,24 @@ const research = async (req, res) => {
                 description: rawdata.description,
                 favicon: rawdata.favicon,
                 summary: summary,
+                keypoints: keypoints,
+                keywords: keywords,
                 readingTime: readingTime
             });
 
             await newResearch.save();
             console.log('Research saved successfully');
 
-            res.send({ 'url': url, 'title': rawdata.title, 'description': rawdata.description, 'favicon': rawdata.favicon, 'summary': summary, 'readingTime': readingTime });
+            res.send({
+                'url': url,
+                'title': rawdata.title,
+                'description': rawdata.description,
+                'favicon': rawdata.favicon,
+                'summary': summary,
+                'keypoints': keypoints,
+                'keywords': keywords,
+                'readingTime': readingTime
+            });
 
         }
     } catch (error) {
