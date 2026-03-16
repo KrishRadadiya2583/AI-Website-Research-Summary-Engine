@@ -40,7 +40,7 @@ const research = async (req, res) => {
 
             const summary = await generateSummary(cleanedText);
             const readingTime = calculateReadingTime(cleanedText);
-            const keywords = extractKeywords(cleanedText);
+            const keywords = await extractKeywords(cleanedText);
             const keypoints = rawdata.headers || [];
 
             const newResearch = new researchModel({
