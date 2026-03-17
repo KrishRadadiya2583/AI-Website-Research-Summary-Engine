@@ -1,54 +1,99 @@
+const axios = require("axios");
+const cheerio = require("cheerio");
 const puppeteer = require("puppeteer");
 
+async function scrapeWithAxios(url) {
+  const { data } = await axios.get(url, {
+    timeout: 20000,
+    headers: {
+      "User-Agent": "Mozilla/5.0",
+    },
+  });
+
+  const $ = cheerio.load(data);
+
+  const getMeta = (name) =>
+    $(`meta[name="${name}"]`).attr("content") || "";
+
+  const getLink = (rel) =>
+    $(`link[rel="${rel}"]`).attr("href") || "";
+
+  const headers = $("h1, h2, h3")
+    .map((i, el) => $(el).text().trim())
+    .get()
+    .filter((t) => t.length > 5)
+    .slice(0, 10);
+
+  return {
+    title: $("title").text() || "",
+    description: getMeta("description"),
+    favicon: getLink("icon") || getLink("shortcut icon"),
+    bodyText: $("body").html(),
+    headers,
+  };
+}
+
+async function scrapeWithPuppeteer(url) {
+  const browser = await puppeteer.launch({
+    headless: "new",
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+    ],
+  });
+
+  const page = await browser.newPage();
+
+  await page.goto(url, {
+    waitUntil: "domcontentloaded",
+    timeout: 60000,
+  });
+
+  const data = await page.evaluate(() => {
+    const getMeta = (name) => {
+      const el = document.querySelector(`meta[name="${name}"]`);
+      return el ? el.content : "";
+    };
+
+    const getLink = (rel) => {
+      const el = document.querySelector(`link[rel="${rel}"]`);
+      return el ? el.href : "";
+    };
+
+    const headers = Array.from(document.querySelectorAll("h1, h2, h3"))
+      .map((h) => h.innerText.trim())
+      .filter((t) => t.length > 5)
+      .slice(0, 10);
+
+    return {
+      title: document.title || "",
+      description: getMeta("description"),
+      favicon: getLink("icon") || getLink("shortcut icon"),
+      bodyText: document.body.innerHTML,
+      headers,
+    };
+  });
+
+  await browser.close();
+  return data;
+}
+
 async function scrapeWebsite(url) {
-  let browser;
   try {
+    // ✅ First try fast method
+    const data = await scrapeWithAxios(url);
 
-    browser = await puppeteer.launch({
-      args: ["--no-sandbox", "--disable-setuid-sandbox"]
-    });
-    const page = await browser.newPage();
-
-    const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
-
-    if (response && response.status() >= 400) {
-      throw new Error(`Page not available (Status: ${response.status()})`);
+    // If content is too small → fallback to Puppeteer
+    if (!data.bodyText || data.bodyText.length < 1000) {
+      console.log("⚠️ Falling back to Puppeteer...");
+      return await scrapeWithPuppeteer(url);
     }
 
-    const metadata = await page.evaluate(() => {
-      const getMeta = (name) => {
-        const element = document.querySelector(`meta[name="${name}"]`);
-        return element ? element.getAttribute("content") : null;
-      };
-
-      const getLink = (rel) => {
-        const element = document.querySelector(`link[rel="${rel}"]`);
-        return element ? element.href : null;
-      };
-
-      const descriptionMeta = getMeta("description");
-      const headers = Array.from(document.querySelectorAll('h1, h2, h3'))
-        .map(h => h.innerText.trim())
-        .filter(t => t.length > 5)
-        .slice(0, 10);
-
-      return {
-        title: document.title || "",
-        description: descriptionMeta ? descriptionMeta.replace(/\n/g, " ").trim() : "",
-        favicon: getLink("icon") || getLink("shortcut icon") || "",
-        bodyText: document.body.innerHTML,
-        headers: headers
-      };
-    });
-
-    return metadata;
+    return data;
   } catch (error) {
-    console.error("Error scraping website:", error.message);
-    throw error;
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
+    console.log("⚠️ Axios failed, using Puppeteer...");
+    return await scrapeWithPuppeteer(url);
   }
 }
 
