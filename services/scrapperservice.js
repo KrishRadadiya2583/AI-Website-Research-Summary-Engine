@@ -3,11 +3,9 @@ const puppeteer = require("puppeteer");
 async function scrapeWebsite(url) {
   let browser;
   try {
-    
-    browser = await puppeteer.launch({ 
-       headless: "new",
-       executablePath: "C:\\Users\\01\\.cache\\puppeteer\\chrome\\win64-146.0.7680.76\\chrome-win64\\chrome.exe",
-       args: ["--no-sandbox", "--disable-setuid-sandbox"]
+
+    browser = await puppeteer.launch({
+      args: ["--no-sandbox", "--disable-setuid-sandbox"]
     });
     const page = await browser.newPage();
 
