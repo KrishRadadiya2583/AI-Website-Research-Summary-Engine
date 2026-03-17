@@ -71,7 +71,10 @@ const research = async (req, res) => {
         }
     } catch (error) {
         console.error('Error saving research:', error);
-        res.status(500).json({ error: 'Failed to save research' });
+        if (error.message.includes('Page not available')) {
+            return res.status(404).json({ error: error.message });
+        }
+        res.status(500).json({ error: 'Failed to analyze website. Please check the URL and try again.' });
     }
 }
 

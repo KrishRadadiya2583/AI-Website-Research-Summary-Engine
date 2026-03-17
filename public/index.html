@@ -4,17 +4,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Website Research Tool</title>
-
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: var(--bg-gradient);
+            color: var(--text-main);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -24,295 +36,430 @@
 
         .container {
             width: 100%;
-            max-width: 750px;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 800px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            padding: 40px;
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 30px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.5rem;
         }
 
-        form {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
         }
 
         input[type=url] {
-            flex: 1;
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 14px;
+            width: 100%;
+            padding: 16px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input[type=url]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
         }
 
         button {
-            padding: 12px 20px;
+            padding: 14px 24px;
             border: none;
-            background: #4CAF50;
+            background: var(--primary);
             color: white;
-            border-radius: 6px;
+            border-radius: 12px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
         }
 
         button:disabled {
-            background: #aaa;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #analyzeBtn {
+            flex: 1;
+        }
+
+        .multi-page-research {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: -10px;
+            margin-bottom: 30px;
+        }
+
+        .page-btn {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            font-size: 14px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .page-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .loading {
             margin-top: 20px;
             text-align: center;
-            font-weight: bold;
+            font-size: 14px;
+            color: var(--text-muted);
+            display: none;
+        }
+
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         .result {
-            margin-top: 25px;
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #ddd;
-            background: #fafafa;
+            margin-top: 30px;
+            padding: 30px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
             position: relative;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .close-btn {
             position: absolute;
-            right: 10px;
-            top: 10px;
+            right: 15px;
+            top: 15px;
             border: none;
-            background: #ff4d4d;
-            color: white;
-            width: 28px;
-            height: 28px;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             cursor: pointer;
             font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
         }
 
-        .result h2 {
-            margin-top: 10px;
+        .close-btn:hover {
+            background: #ef4444;
+            color: white;
         }
 
         .meta {
             display: flex;
-            gap: 10px;
+            gap: 15px;
             align-items: center;
-            flex-wrap: wrap;
+            margin-bottom: 20px;
         }
 
-        .summary {
-            margin-top: 15px;
+        .meta img {
+            border-radius: 8px;
+            background: white;
+            padding: 2px;
+        }
+
+        .meta strong {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .result h2 {
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .description {
+            color: var(--text-muted);
+            margin-bottom: 25px;
             line-height: 1.6;
         }
 
-        .keypoints {
-            margin-top: 15px;
+        .summary-box {
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 4px solid var(--primary);
+            padding: 20px;
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 25px;
+        }
+
+        .summary-box strong {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--primary);
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.05em;
         }
 
         .keypoints ul {
-            padding-left: 20px;
-            margin-top: 5px;
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        .keypoints li {
+            padding-left: 24px;
+            position: relative;
+            margin-bottom: 10px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .keypoints li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
         }
 
         .keywords {
-            margin-top: 15px;
+            margin-top: 25px;
             display: flex;
-            gap: 8px;
+            gap: 10px;
             flex-wrap: wrap;
         }
 
         .keyword-badge {
-            background: #e0e7ff;
-            color: #4338ca;
-            padding: 4px 10px;
-            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 8px;
             font-size: 12px;
-            font-weight: 600;
+            border: 1px solid var(--glass-border);
         }
 
-        .visit {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 18px;
-            background: #007bff;
-            color: white;
+        .visit-btn {
+            display: inline-flex;
+            margin-top: 30px;
+            padding: 12px 24px;
+            background: white;
+            color: #0f172a;
             text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            transition: background 0.3s;
+            border-radius: 10px;
+            font-weight: 700;
+            transition: all 0.3s;
+            align-items: center;
+            gap: 8px;
         }
 
-        .visit:hover {
-            background: #0056b3;
+        .visit-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
         }
 
         .error {
-            color: red;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 15px;
+            border-radius: 12px;
             margin-top: 20px;
+            display: none;
+            text-align: center;
         }
-
-        /* ---------------- Responsive ---------------- */
 
         @media(max-width:600px) {
-
-            .container {
-                padding: 20px;
-            }
-
-            form {
-                flex-direction: column;
-            }
-
-            button {
-                width: 100%;
-            }
-
-            .meta {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .result {
-                padding: 18px;
-            }
-
-            h1 {
-                font-size: 22px;
-            }
-
+            .container { padding: 25px; }
+            h1 { font-size: 1.8rem; }
+            .actions { flex-direction: column; }
+            .multi-page-research { flex-wrap: wrap; }
         }
     </style>
-
 </head>
 
 <body>
 
     <div class="container">
-
-        <h1>🔎 Website Research Tool</h1>
+        <h1>🔎 Research Engine</h1>
 
         <form id="researchForm">
+            <div class="input-group">
+                <input type="url" placeholder="Enter website URL (e.g. https://google.com)" id="urlInput" required>
+            </div>
 
-            <input type="url" placeholder="Enter website URL..." id="urlInput" required>
+            <div class="multi-page-research">
+                <button type="button" class="page-btn" onclick="setAndAnalyze('/')">Home</button>
+                <button type="button" class="page-btn" onclick="setAndAnalyze('/about')">About</button>
+                <button type="button" class="page-btn" onclick="setAndAnalyze('/contact')">Contact</button>
+            </div>
 
-            <button id="analyzeBtn" type="submit">Analyze</button>
-
+            <div class="actions">
+                <button id="analyzeBtn" type="submit">
+                    <span>Analyze Base URL</span>
+                </button>
+            </div>
         </form>
 
-        <div id="loading" class="loading" style="display:none;">
-            ⏳ Scraping website & generating summary...
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <span>Deep scanning and generating AI summary...</span>
         </div>
 
         <div id="error" class="error"></div>
 
         <div id="result"></div>
-
     </div>
 
     <script>
-
         const form = document.getElementById("researchForm");
+        const urlInput = document.getElementById("urlInput");
         const resultDiv = document.getElementById("result");
         const loading = document.getElementById("loading");
         const errorDiv = document.getElementById("error");
         const btn = document.getElementById("analyzeBtn");
 
-        form.addEventListener("submit", async function (e) {
-
-            e.preventDefault();
-
-            const url = document.getElementById("urlInput").value;
-
+        async function performResearch(url) {
             resultDiv.innerHTML = "";
-            errorDiv.innerHTML = "";
-
+            errorDiv.style.display = "none";
             loading.style.display = "block";
             btn.disabled = true;
 
             try {
-
                 const response = await fetch("/research", {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ urlinput: url })
                 });
 
-                if (!response.ok) {
-                    throw new Error("Server error");
-                }
-
                 const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Server error");
+                }
 
                 loading.style.display = "none";
                 btn.disabled = false;
 
                 resultDiv.innerHTML = `
-<div class="result" id="resultCard">
-
-<button class="close-btn" onclick="closeResult()">✕</button>
-
-<div class="meta">
-<img src="${data.favicon}" width="32" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1243/1243966.png'">
-<strong>${data.url}</strong>
-</div>
-
-<h2>${data.title}</h2>
-
-<p><strong>Description:</strong> ${data.description || 'No description available'}</p>
-
-<div class="summary">
-<strong>✨ AI Summary:</strong>
-<p>${data.summary}</p>
-</div>
-
-${data.keypoints && data.keypoints.length > 0 ? `
-<div class="keypoints">
-<strong>📌 Key Points:</strong>
-<ul>
-${data.keypoints.map(point => `<li>${point}</li>`).join('')}
-</ul>
-</div>
-` : ''}
-
-${data.keywords && data.keywords.length > 0 ? `
-<div class="keywords">
-${data.keywords.map(word => `<span class="keyword-badge">#${word}</span>`).join('')}
-</div>
-` : ''}
-
-<div style="margin-top:15px; font-size:14px; color:#666;">
-⏱ <strong>Reading Time:</strong> ${data.readingTime} min
-</div>
-
-<a class="visit" href="${data.url}" target="_blank">Visit Website</a>
-
-</div>
-`;
-
-            }
-            catch (err) {
-
+                    <div class="result">
+                        <button class="close-btn" onclick="closeResult()">✕</button>
+                        <div class="meta">
+                            <img src="${data.favicon}" width="24" height="24" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1243/1243966.png'">
+                            <strong>${data.url}</strong>
+                        </div>
+                        <h2>${data.title}</h2>
+                        <p class="description">${data.description || 'No description available for this page.'}</p>
+                        <div class="summary-box">
+                            <strong>✨ AI Summary</strong>
+                            <p>${data.summary}</p>
+                        </div>
+                        ${data.keypoints && data.keypoints.length > 0 ? `
+                        <div class="keypoints">
+                            <strong style="font-size:12px; color:var(--primary); text-transform:uppercase;">📌 Key Highlights</strong>
+                            <ul>
+                                ${data.keypoints.map(point => `<li>${point}</li>`).join('')}
+                            </ul>
+                        </div>
+                        ` : ''}
+                        <div class="keywords">
+                            ${data.keywords.map(word => `<span class="keyword-badge">#${word}</span>`).join('')}
+                        </div>
+                        <a class="visit-btn" href="${data.url}" target="_blank">
+                            Explore Site ↗
+                        </a>
+                    </div>
+                `;
+            } catch (err) {
                 loading.style.display = "none";
                 btn.disabled = false;
-
-                errorDiv.innerHTML = "⚠ Failed to analyze website.";
-
+                errorDiv.style.display = "block";
+                if (err.message.includes("404") || err.message.includes("not available")) {
+                    errorDiv.innerHTML = "🚫 <strong>Page Not Available:</strong> This specific URL could not be found on the site.";
+                } else {
+                    errorDiv.innerHTML = "⚠ <strong>Analysis Failed:</strong> " + err.message;
+                }
             }
-
-        });
-
-        function closeResult() {
-            document.getElementById("result").innerHTML = "";
         }
 
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            performResearch(urlInput.value);
+        });
+
+        function setAndAnalyze(path) {
+            let value = urlInput.value.trim();
+            if (!value) {
+                errorDiv.style.display = "block";
+                errorDiv.innerHTML = "Please enter a base URL first.";
+                return;
+            }
+
+            // Extract base URL if it's already a full path
+            try {
+                const url = new URL(value);
+                const baseUrl = url.origin;
+                const fullUrl = path === '/' ? baseUrl : baseUrl + path;
+                urlInput.value = fullUrl;
+                performResearch(fullUrl);
+            } catch (e) {
+                // Not a valid URL yet, let the normal flow handle it
+                errorDiv.style.display = "block";
+                errorDiv.innerHTML = "Invalid URL. Please enter a full URL (e.g. https://google.com)";
+            }
+        }
+
+        function closeResult() {
+            resultDiv.innerHTML = "";
+        }
     </script>
-
 </body>
-
 </html>

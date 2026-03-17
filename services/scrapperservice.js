@@ -10,7 +10,11 @@ async function scrapeWebsite(url) {
     });
     const page = await browser.newPage();
 
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
+    const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
+
+    if (response && response.status() >= 400) {
+      throw new Error(`Page not available (Status: ${response.status()})`);
+    }
 
     const metadata = await page.evaluate(() => {
       const getMeta = (name) => {
