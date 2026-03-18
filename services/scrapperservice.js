@@ -1,110 +1,82 @@
-const axios = require('axios');
-const cheerio = require('cheerio');
-const { CheerioCrawler } = require('crawlee');
+const puppeteer = require('puppeteer');
+const { Readability } = require('@mozilla/readability');
+const { JSDOM } = require('jsdom');
 
 // ----------------------
-// AXIOS SCRAPER
+// PUPPETEER SCRAPER
 // ----------------------
-async function scrapeWithAxios(url) {
-  const response = await axios.get(url, {
-    timeout: 30000,
-    headers: {
-      'User-Agent': 'Mozilla/5.0',
-    },
-    validateStatus: () => true, // prevent throwing on non-200
-  });
+async function scrapeWithPuppeteer(url) {
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu'
+      ]
+    });
 
-  if (!response.data || response.status >= 400) {
-    throw new Error(`Axios failed with status ${response.status}`);
-  }
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+    await page.setViewport({ width: 1280, height: 720 });
 
-  const html = response.data;
-  const $ = cheerio.load(html);
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
 
-  const getMeta = (name) =>
-    $(`meta[name="${name}"]`).attr('content') || '';
+    const content = await page.content();
+    const dom = new JSDOM(content, { url });
+    const reader = new Readability(dom.window.document);
+    const article = reader.parse();
 
-  const getLink = (rel) =>
-    $(`link[rel="${rel}"]`).attr('href') || '';
+    const title = article?.title || await page.title() || '';
+    const bodyText = article?.textContent || content;
 
-  const headers = [];
-  $('h1, h2, h3').each((i, el) => {
-    const text = $(el).text().trim();
-    if (text.length > 5 && headers.length < 10) {
-      headers.push(text);
+    const description = await page.evaluate(() => {
+      const meta = document.querySelector('meta[name="description"]');
+      return meta ? meta.getAttribute('content') : '';
+    });
+
+    const favicon = await page.evaluate(() => {
+      const link = document.querySelector('link[rel="icon"]') || document.querySelector('link[rel="shortcut icon"]');
+      return link ? link.href : '';
+    });
+
+    const headers = await page.evaluate(() => {
+      const headings = Array.from(document.querySelectorAll('h1, h2, h3'));
+      return headings.map(h => h.textContent.trim()).filter(text => text.length > 5).slice(0, 10);
+    });
+
+    return {
+      title,
+      description,
+      favicon,
+      bodyText,
+      headers,
+      source: 'puppeteer',
+    };
+  } finally {
+    if (browser) {
+      await browser.close();
     }
-  });
-
-  return {
-    title: $('title').text() || '',
-    description: getMeta('description'),
-    favicon: getLink('icon') || getLink('shortcut icon'),
-    bodyText: html,
-    headers,
-    source: 'axios',
-  };
-}
-
-// ----------------------
-// CRAWLEE SCRAPER
-// ----------------------
-async function scrapeWithCrawlee(url) {
-  let result = null;
-
-  const crawler = new CheerioCrawler({
-    maxRequestsPerCrawl: 1,
-    requestHandler: async ({ $, body }) => {
-      const getMeta = (name) =>
-        $(`meta[name="${name}"]`).attr('content') || '';
-
-      const getLink = (rel) =>
-        $(`link[rel="${rel}"]`).attr('href') || '';
-
-      const headers = [];
-      $('h1, h2, h3').each((i, el) => {
-        const text = $(el).text().trim();
-        if (text.length > 5 && headers.length < 10) {
-          headers.push(text);
-        }
-      });
-
-      result = {
-        title: $('title').text() || '',
-        description: getMeta('description'),
-        favicon: getLink('icon') || getLink('shortcut icon'),
-        bodyText: body || '',
-        headers,
-        source: 'crawlee',
-      };
-    },
-  });
-
-  await crawler.run([url]);
-
-  if (!result) {
-    throw new Error('Crawlee failed');
   }
-
-  return result;
 }
 
 // ----------------------
-// MAIN FUNCTION (FALLBACK)
+// MAIN FUNCTION
 // ----------------------
 async function scrapeWebsite(url) {
   try {
-    console.log('Trying Axios...');
-    return await scrapeWithAxios(url);
+    console.log('Scraping with Puppeteer...');
+    return await scrapeWithPuppeteer(url);
   } catch (err) {
-    console.warn('Axios failed:', err.message);
-
-    try {
-      console.log('Falling back to Crawlee...');
-      return await scrapeWithCrawlee(url);
-    } catch (err2) {
-      console.error('Crawlee also failed:', err2.message);
-      throw new Error('Both Axios and Crawlee failed');
-    }
+    console.error('Puppeteer failed:', err.message);
+    throw new Error('Scraping failed');
   }
 }
 
