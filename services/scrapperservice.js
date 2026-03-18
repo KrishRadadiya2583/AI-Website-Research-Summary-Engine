@@ -1,6 +1,7 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
-const puppeteer = require("puppeteer");
+
+const { chromium } = require("playwright");
 
 async function scrapeWithAxios(url) {
   const { data } = await axios.get(url, {
@@ -33,17 +34,15 @@ async function scrapeWithAxios(url) {
   };
 }
 
-async function scrapeWithPuppeteer(url) {
-  const browser = await puppeteer.launch({
-    headless: "new",
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-    ],
+
+async function scrapeWithPlaywright(url) {
+  const browser = await chromium.launch({
+    headless: true,
+    args: ["--no-sandbox"],
   });
 
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
 
   await page.goto(url, {
     waitUntil: "domcontentloaded",
@@ -81,19 +80,17 @@ async function scrapeWithPuppeteer(url) {
 
 async function scrapeWebsite(url) {
   try {
-    // ✅ First try fast method
     const data = await scrapeWithAxios(url);
 
-    // If content is too small → fallback to Puppeteer
     if (!data.bodyText || data.bodyText.length < 1000) {
-      console.log("⚠️ Falling back to Puppeteer...");
-      return await scrapeWithPuppeteer(url);
+      console.log("⚠️ Falling back to Playwright...");
+      return await scrapeWithPlaywright(url);
     }
 
     return data;
   } catch (error) {
-    console.log("⚠️ Axios failed, using Puppeteer...");
-    return await scrapeWithPuppeteer(url);
+    console.log("⚠️ Axios failed, using Playwright...");
+    return await scrapeWithPlaywright(url);
   }
 }
 
