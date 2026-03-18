@@ -5,8 +5,12 @@ const { chromium } = require("playwright");
 
 async function scrapeWithPlaywright(url) {
   const browser = await chromium.launch({
-    headless: true,
-    args: ["--no-sandbox"],
+     headless: true,
+  args: [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage'
+  ]
   });
 
   const context = await browser.newContext();
