@@ -34,13 +34,28 @@ const research = async (req, res) => {
         }
         else {
 
-            const rawdata = await scrapeWebsite(url);
-
             const cleanedText = cleanText(rawdata.bodyText);
 
-            const summary = await generateSummary(cleanedText);
+            if (!cleanedText || cleanedText.length < 50) {
+                throw new Error('Insufficient content extracted from the page. The page might be empty or not accessible.');
+            }
+
+            let summary = 'Summary generation failed.';
+            try {
+                summary = await generateSummary(cleanedText);
+            } catch (sumErr) {
+                console.warn('Summary generation failed:', sumErr.message);
+            }
+
             const readingTime = calculateReadingTime(cleanedText);
-            const keywords = await extractKeywords(cleanedText);
+
+            let keywords = [];
+            try {
+                keywords = extractKeywords(cleanedText);
+            } catch (keyErr) {
+                console.warn('Keyword extraction failed:', keyErr.message);
+            }
+
             const keypoints = rawdata.headers || [];
 
             const newResearch = new researchModel({
