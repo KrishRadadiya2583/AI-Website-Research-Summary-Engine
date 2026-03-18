@@ -34,6 +34,8 @@ const research = async (req, res) => {
         }
         else {
 
+            const rawdata = await scrapeWebsite(url);
+
             const cleanedText = cleanText(rawdata.bodyText);
 
             if (!cleanedText || cleanedText.length < 50) {
