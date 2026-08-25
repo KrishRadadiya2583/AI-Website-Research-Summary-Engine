@@ -14,7 +14,6 @@ async function loadSummarizer() {
         return await pipeline('summarization', 'Xenova/distilbart-cnn-12-6');
       } catch (err) {
         transformerAvailable = false;
-        console.warn('Local transformer summarizer unavailable:', err.message);
         return null;
       }
     })();
@@ -51,9 +50,7 @@ async function generateSummary(text, opts = {}) {
           method = 'abstractive+extractive';
         }
       }
-    } catch (err) {
-      console.warn('Abstractive summary failed, using extractive only:', err.message);
-    }
+    } catch { /* extractive summary remains available */ }
   }
 
   return {

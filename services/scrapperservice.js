@@ -459,6 +459,7 @@ function extractFromCheerio($, url, extras = {}) {
       palette,
     },
     thirdPartyDomains: thirdPartyDomains.slice(0, 30),
+    thirdPartyDomainCount: thirdPartyDomains.length,
     trackers: Array.from(trackers).slice(0, 20),
     a11y,
     stats: {

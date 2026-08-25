@@ -69,6 +69,7 @@ const researchSchema = new mongoose.Schema({
 
   resources: Mixed,
   thirdPartyDomains: [Mixed],
+  thirdPartyDomainCount: Number,
   trackers: [String],
   a11y: Mixed,
 

@@ -28,12 +28,14 @@ function buildResponse(doc) {
   // Convert Mongoose doc to plain object and strip huge fields not needed by client
   const obj = typeof doc.toObject === 'function' ? doc.toObject() : doc;
   delete obj.__v;
+  // Prevent older cached documents from returning stale reading-time rules.
+  obj.readingTime = calculateReadingTime.fromWordCount(obj.stats?.wordCount ?? obj.readingTime?.words);
   return obj;
 }
 
 const research = async (req, res) => {
   try {
-    const url = req.body.urlinput;
+    const url = req.researchUrl;
     const refresh = req.body.refresh === true || req.body.refresh === 'true';
 
     const dbUp = isConnected();
@@ -59,7 +61,6 @@ const research = async (req, res) => {
     try {
       summaryResult = await generateSummary(cleaned, { sentences: 5 });
     } catch (err) {
-      console.warn('Summary generation failed:', err.message);
       summaryResult.short = 'Summary generation failed.';
     }
 
@@ -167,6 +168,7 @@ const research = async (req, res) => {
 
       resources: raw.resources,
       thirdPartyDomains: raw.thirdPartyDomains,
+      thirdPartyDomainCount: raw.thirdPartyDomainCount,
       trackers: raw.trackers,
       a11y: raw.a11y,
 
@@ -202,18 +204,18 @@ const research = async (req, res) => {
           { $set: doc },
           { new: true, upsert: true, setDefaultsOnInsert: true }
         );
-      } catch (dbErr) {
-        console.warn('DB save failed, returning result anyway:', dbErr.message);
+      } catch {
+        // Caching is optional; return the completed analysis if persistence fails.
       }
     }
 
     res.json({ cached: false, dbAvailable: dbUp, ...buildResponse(saved) });
   } catch (error) {
-    console.error('Research failed:', error);
-    const status = error.message?.includes('Page not available') ? 404 : 500;
+    console.error(`[research] ${error.message}`);
+    const status = error.response?.status === 404 || error.message?.includes('Page not available') ? 404 : 502;
     res.status(status).json({
       error: 'Failed to analyze website.',
-      details: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };

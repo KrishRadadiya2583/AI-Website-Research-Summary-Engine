@@ -1,87 +1,44 @@
-Project: AI Website Research & Summary Engine
-Idea
-Build a backend service that automatically researches any website and generates a clean summary with key insights.
-A user submits a URL, and your system:
-Opens the page using Puppeteer
-Extracts meaningful content
-Cleans the HTML
-Generates a structured summary
-Stores results for reuse
-This is useful for:
-researchers
-students
-founders
-marketers
-content creators
+# Website Research & Summary Engine
 
+A local-first website intelligence service. It extracts useful page content and returns summaries, keywords, entities, SEO/security signals, accessibility checks, technology hints, links, media, and company facts.
 
-Example Flow
-User submits URL
-      ↓
-Backend validates URL
-      ↓
-Puppeteer loads webpage
-      ↓
-Extract article text
-      ↓
-Clean HTML → plain text
-      ↓
-Generate summary
-      ↓
-Return insights
+## Run locally
 
+Requirements: Node.js 20+ and a Chromium-compatible environment for JavaScript-heavy sites.
 
-Example API
-Request
+```bash
+npm install
+npm start
+```
+
+Open `http://localhost:3000`. MongoDB is optional; without `MONGODB_URI`, analysis works normally but results are not cached.
+
+```env
+PORT=3000
+MONGODB_URI=mongodb://127.0.0.1:27017/website_research
+PUPPETEER_EXECUTABLE_PATH=/optional/path/to/chrome
+```
+
+## API
+
+Analyze a public HTTP(S) page:
+
+```http
 POST /research
+Content-Type: application/json
 
-Body
-{
-  "url": "https://example.com/blog/ai-startups"
-}
+{"url":"https://example.com","refresh":false}
+```
 
-Response
-{
- "title": "AI Startups in 2026",
- "summary": "This article explains how AI startups are disrupting SaaS...",
- "key_points": [
-   "AI tools are replacing manual workflows",
-   "Startups focus on automation",
-   "Infrastructure cost is decreasing"
- ],
- "reading_time": "3 minutes"
-}
+`refresh` bypasses the MongoDB cache. The legacy `urlinput` property remains supported. Local, private-network, credential-bearing, and unresolvable URLs are rejected.
 
-Tech Stack (Free)
-Backend
-Node.js
-Express
-Scraping
-Puppeteer
-Database
-PostgreSQL or MongoDB
+Health check: `GET /health`
 
+## Development
 
-Core Features
+```bash
+npm test
+npm run dev
+```
 
-Folder Structure
-src
- ├── controllers
- ├── services
- │    └── puppeteerService.js
- ├── routes
- ├── utils
- ├── jobs
- └── app.js
-
- 
-What You Will Learn
-
-This project teaches real backend engineering skills:
-web scraping
-Puppeteer automation
-async processing
-caching
-API design
-background jobs
-production error handling
+The fast Axios/Cheerio path handles static pages. Puppeteer is used as a fallback when too little content is extracted. Extractive summarization is always available; the larger local transformer is loaded lazily when available.

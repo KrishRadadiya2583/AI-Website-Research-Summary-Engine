@@ -84,12 +84,14 @@
         .brand-mark {
             width: 36px; height: 36px;
             border-radius: 10px;
-            background: linear-gradient(135deg, var(--brand) 0%, var(--accent) 100%);
+            background: var(--brand);
             display: flex; align-items: center; justify-content: center;
             color: white; font-weight: 800; font-size: 13px;
             letter-spacing: -0.02em;
-            box-shadow: 0 4px 14px rgba(99,102,241,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+            box-shadow: none;
+            flex: 0 0 auto;
         }
+        .brand-mark svg { width: 100%; height: 100%; display: block; }
         .brand-text { display: flex; flex-direction: column; line-height: 1.1; }
         .brand-text .name { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
         .brand-text .tagline { font-size: 10px; color: var(--text-3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
@@ -406,6 +408,18 @@
             color: var(--text-1);
             font-size: 15px; line-height: 1.7;
         }
+        .summary-insights {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+            margin-top: 14px;
+        }
+        .summary-insight {
+            padding: 12px; border: 1px solid var(--border); border-radius: 9px;
+            background: var(--bg-2);
+        }
+        .summary-insight span { display: block; color: var(--text-3); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+        .summary-insight strong { display: block; margin-top: 4px; color: var(--text-0); font-size: 14px; text-transform: capitalize; }
+        .key-points { margin: 10px 0 0; padding-left: 20px; color: var(--text-1); }
+        .key-points li { padding: 4px 0; line-height: 1.55; }
 
         /* ============ SCORE ============ */
         .score-block { display: flex; align-items: center; gap: 20px; }
@@ -665,6 +679,11 @@
             .search-row { flex-direction: column; }
             .result-header { padding: 20px; flex-direction: column; }
             .score-block { flex-direction: column; align-items: flex-start; }
+            .summary-insights { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media(max-width: 420px) {
+            .nav-pill { display: none; }
+            .brand-mark { width: 40px; height: 40px; }
         }
 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -684,14 +703,14 @@
 <header class="topbar">
     <div class="topbar-inner">
         <a class="brand" href="/">
-            <div class="brand-mark">KR</div>
+            <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 36 36"><text x="18" y="23" fill="#fff" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700">KR</text></svg></div>
             <div class="brand-text">
                 <span class="name">KR Scrapers</span>
                 <span class="tagline">Website Intelligence</span>
             </div>
         </a>
         <div class="nav-actions">
-            <span class="nav-pill"><span class="dot"></span> Local · No External APIs</span>
+            <span class="nav-pill"><span class="dot"></span> Service ready</span>
         </div>
     </div>
 </header>
@@ -700,8 +719,8 @@
     <section class="hero">
         <div class="hero-content">
             <span class="hero-badge">✦ Deep Web Analysis</span>
-            <h1>Analyze any website in <span class="accent">seconds.</span></h1>
-            <p>Extract structured metadata, SEO signals, security headers, readability scores, sentiment, entities, tech stack, third-party trackers, and more — all processed locally on your infrastructure.</p>
+            <h1>Analyze a public website in <span class="accent">moments.</span></h1>
+            <p>Extract structured metadata, heuristic SEO and security scores, readability, sentiment, entities, technology signals, third-party trackers, and more.</p>
             <form id="researchForm" class="search-form">
                 <div class="search-row">
                     <div class="search-input-wrap">
@@ -746,7 +765,7 @@
 </main>
 
 <footer>
-    <div class="brand-mark">KR</div>
+    <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 36 36"><text x="18" y="23" fill="#fff" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700">KR</text></svg></div>
     KR Scrapers · Website Intelligence Platform
 </footer>
 
@@ -779,10 +798,10 @@ async function runResearch(url, refresh) {
         const resp = await fetch('/research', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ urlinput: url, refresh }),
+            body: JSON.stringify({ url, refresh }),
         });
         const data = await resp.json();
-        if (!resp.ok) throw new Error(data.error || data.details || 'Server error');
+        if (!resp.ok) throw new Error(data.message || data.error || data.details || `Request failed (${resp.status})`);
         renderResult(data);
     } catch (err) {
         errorAlert.classList.add('active');
@@ -869,7 +888,7 @@ function renderResult(d) {
             </div>
             <div style="flex:1; min-width:0;">
                 <h2 class="result-title">${escapeHtml(d.title || 'Untitled Page')}</h2>
-                <div class="result-url"><a href="${escapeHtml(d.url)}" target="_blank" rel="noopener">${escapeHtml(d.finalUrl || d.url)}</a></div>
+                <div class="result-url"><a href="${escapeHtml(d.finalUrl || d.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(d.finalUrl || d.url)}</a></div>
                 <p class="result-desc">${escapeHtml(d.description || 'No meta description provided.')}</p>
                 <div class="tag-row">${badges.join('')}</div>
             </div>
@@ -893,9 +912,9 @@ function renderResult(d) {
                 <div class="metric-sub">${s.paragraphCount ?? 0} paragraphs</div>
             </div>
             <div class="metric"><div class="metric-icon">${ICON.clock}</div>
-                <div class="metric-label">Reading Time</div>
-                <div class="metric-value">${rt.minutes ?? 0}m ${rt.seconds ?? 0}s</div>
-                <div class="metric-sub">${(rt.words ?? s.wordCount ?? 0).toLocaleString()} words</div>
+                <div class="metric-label">Estimated Reading Time</div>
+                <div class="metric-value">${escapeHtml(rt.label || '0 min read')}</div>
+                <div class="metric-sub">${(rt.words ?? s.wordCount ?? 0).toLocaleString()} words · ${rt.wordsPerMinute || 200} WPM</div>
             </div>
             <div class="metric"><div class="metric-icon">${ICON.link}</div>
                 <div class="metric-label">Links</div>
@@ -904,8 +923,8 @@ function renderResult(d) {
             </div>
             <div class="metric"><div class="metric-icon">${ICON.globe}</div>
                 <div class="metric-label">Third-Party</div>
-                <div class="metric-value">${d.thirdPartyDomains?.length ?? 0}</div>
-                <div class="metric-sub">domains contacted</div>
+                <div class="metric-value">${d.thirdPartyDomainCount ?? d.thirdPartyDomains?.length ?? 0}</div>
+                <div class="metric-sub">domains detected</div>
             </div>
         </div>
     `);
@@ -914,12 +933,14 @@ function renderResult(d) {
     // ============ SUMMARY ============
     if (d.summary || d.summaryExtractive) {
         const hasBoth = d.summaryAbstractive && d.summaryExtractive;
+        const methodLabel = d.summaryMethod === 'abstractive+extractive'
+            ? 'AI + extractive' : d.summaryMethod === 'extractive' ? 'Extractive' : 'Local';
         parts.push(`
             <div id="s-summary"></div>
             <div class="card anim-in" style="margin-bottom:20px;">
                 <div class="card-head">
                     <div class="card-title">${ICON.sparkle} Content Summary</div>
-                    <span class="card-badge">${escapeHtml(d.summaryMethod || 'local')}</span>
+                    <span class="card-badge">${escapeHtml(methodLabel)}</span>
                 </div>
                 ${hasBoth ? `<div class="summary-tabs">
                     <button class="summary-tab active" data-tab="abs">Abstractive</button>
@@ -927,6 +948,14 @@ function renderResult(d) {
                 </div>` : ''}
                 <div class="summary-body" data-summary="abs">${escapeHtml(d.summaryAbstractive || d.summary || '')}</div>
                 ${hasBoth ? `<div class="summary-body" data-summary="ext" style="display:none;">${escapeHtml(d.summaryExtractive)}</div>` : ''}
+                <div class="summary-insights">
+                    <div class="summary-insight"><span>Read time</span><strong>${escapeHtml(rt.label || '—')}</strong></div>
+                    <div class="summary-insight"><span>Tone</span><strong>${escapeHtml(d.sentiment?.label || 'Neutral')}</strong></div>
+                    <div class="summary-insight"><span>Readability</span><strong>${escapeHtml(d.readability?.readingLevel || '—')}</strong></div>
+                    <div class="summary-insight"><span>SEO / Security</span><strong>${d.seo?.score ?? '—'} / ${d.security?.score ?? '—'}</strong></div>
+                </div>
+                ${has(d.keypoints) ? `<div style="margin-top:18px;"><div class="sub-label">Key points</div><ul class="key-points">${d.keypoints.slice(0, 6).map(point => `<li>${escapeHtml(point)}</li>`).join('')}</ul></div>` : ''}
+                ${has(d.keywords) ? `<div style="margin-top:16px;"><div class="sub-label">Top topics</div><div class="chip-cloud">${d.keywords.slice(0, 8).map(k => `<span class="chip brand">${escapeHtml(k)}</span>`).join('')}</div></div>` : ''}
             </div>
         `);
         sections.push({ id: 's-summary', label: 'Summary' });
