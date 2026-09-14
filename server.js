@@ -2,6 +2,7 @@ require('dotenv').config({ quiet: true });
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
+const logger = require('./utils/logger');
 
 const indexRouter = require('./routes/research');
 
@@ -25,7 +26,11 @@ app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 
 // Global error handler for all unhandled errors
 app.use((err, req, res, next) => {
-    console.error(`[server] ${err.message}`);
+    logger.error('Unhandled server error', {
+        route: req.originalUrl,
+        method: req.method,
+        reason: err.message,
+    });
     res.status(err.status || 500).json({
         error: 'Internal server error',
         details: process.env.NODE_ENV === 'development' ? err.message : undefined,
@@ -33,5 +38,8 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+    logger.info('Server ready', {
+        port,
+        env: process.env.NODE_ENV || 'development',
+    });
 });

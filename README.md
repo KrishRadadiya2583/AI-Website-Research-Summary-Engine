@@ -17,7 +17,10 @@ Open `http://localhost:3000`. MongoDB is optional; without `MONGODB_URI`, analys
 PORT=3000
 MONGODB_URI=mongodb://127.0.0.1:27017/website_research
 PUPPETEER_EXECUTABLE_PATH=/optional/path/to/chrome
+LOG_LEVEL=info
 ```
+
+`LOG_LEVEL` supports `silent`, `error`, `warn`, `info`, and `debug`.
 
 ## API
 

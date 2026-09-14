@@ -16,6 +16,8 @@ const detectTechnologies = require('../utils/techdetect');
 const analyzeSecurity = require('../utils/securityanalyzer');
 const analyzeText = require('../utils/textanalytics');
 const extractCompany = require('../utils/companyextractor');
+const buildAnalysisText = require('../utils/analysistext');
+const logger = require('../utils/logger');
 
 const researchModel = require('../model/Research');
 const { isConnected } = require('../config/db');
@@ -34,6 +36,7 @@ function buildResponse(doc) {
 }
 
 const research = async (req, res) => {
+  const startedAt = Date.now();
   try {
     const url = req.researchUrl;
     const refresh = req.body.refresh === true || req.body.refresh === 'true';
@@ -41,18 +44,25 @@ const research = async (req, res) => {
     const dbUp = isConnected();
     if (!refresh && dbUp) {
       const existing = await researchModel.findOne({ url });
-      if (existing) return res.json({ cached: true, ...buildResponse(existing) });
+      if (existing) {
+        logger.info('Research cache hit', {
+          url,
+          durationMs: Date.now() - startedAt,
+        });
+        return res.json({ cached: true, ...buildResponse(existing) });
+      }
     }
 
     // 1) Scrape
     const raw = await scrapeWebsite(url);
 
     // 2) Clean primary body text
-    const cleaned = cleanText(raw.bodyText);
+    const primaryText = cleanText(raw.bodyText);
+    const cleaned = primaryText.length >= 50 ? primaryText : buildAnalysisText(raw);
     if (!cleaned || cleaned.length < 50) {
       return res.status(422).json({
         error: 'Insufficient content extracted from the page.',
-        details: `Only ${cleaned.length} characters of text could be recovered.`,
+        details: `Only ${cleaned.length} characters of usable text could be recovered.`,
       });
     }
 
@@ -202,16 +212,27 @@ const research = async (req, res) => {
         saved = await researchModel.findOneAndUpdate(
           { url },
           { $set: doc },
-          { new: true, upsert: true, setDefaultsOnInsert: true }
+          { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true }
         );
       } catch {
         // Caching is optional; return the completed analysis if persistence fails.
       }
     }
 
+    logger.info('Research completed', {
+      url,
+      cached: false,
+      source: raw.source,
+      words: raw.stats?.wordCount,
+      durationMs: Date.now() - startedAt,
+    });
     res.json({ cached: false, dbAvailable: dbUp, ...buildResponse(saved) });
   } catch (error) {
-    console.error(`[research] ${error.message}`);
+    logger.error('Research failed', {
+      url: req.researchUrl || req.body?.url || req.body?.urlinput,
+      reason: error.message,
+      durationMs: Date.now() - startedAt,
+    });
     const status = error.response?.status === 404 || error.message?.includes('Page not available') ? 404 : 502;
     res.status(status).json({
       error: 'Failed to analyze website.',
