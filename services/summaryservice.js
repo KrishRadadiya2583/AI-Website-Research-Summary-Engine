@@ -5,16 +5,23 @@ const extractiveSummary = require('../utils/extractivesummary');
 let summarizerPromise = null;
 let transformerAvailable = true;
 
+function configureOnnxRuntimeLogging() {
+  // Keep ONNX Runtime from flooding stderr with model graph warnings.
+  if (!process.env.ORT_LOG_SEVERITY_LEVEL) {
+    process.env.ORT_LOG_SEVERITY_LEVEL = '3';
+  }
+}
+
 async function loadSummarizer() {
   if (!transformerAvailable) return null;
   if (!summarizerPromise) {
     summarizerPromise = (async () => {
       try {
+        configureOnnxRuntimeLogging();
         const { pipeline } = require('@xenova/transformers');
         return await pipeline('summarization', 'Xenova/distilbart-cnn-12-6');
       } catch (err) {
         transformerAvailable = false;
-        console.warn('Local transformer summarizer unavailable:', err.message);
         return null;
       }
     })();
@@ -51,9 +58,7 @@ async function generateSummary(text, opts = {}) {
           method = 'abstractive+extractive';
         }
       }
-    } catch (err) {
-      console.warn('Abstractive summary failed, using extractive only:', err.message);
-    }
+    } catch { /* extractive summary remains available */ }
   }
 
   return {
